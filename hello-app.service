@@ -1,0 +1,10 @@
+[Unit]
+Description=Hello Go app on GCE
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/app
+Environment=PORT=80
+
+[Install]
+WantedBy=multi-user.target
