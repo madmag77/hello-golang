@@ -14,6 +14,7 @@ func Test_when_Put_KV_then_can_read_value(t *testing.T) {
 	Put(testKey, testValue)
 	val, err := Get(testKey)
 
+	// Then
 	if err != nil {
 		t.Error("Get shouldn't return error")
 	}
@@ -33,6 +34,7 @@ func Test_when_twice_Put_KV_then_can_still_read_value(t *testing.T) {
 	Put(testKey, testValue)
 	val, err := Get(testKey)
 
+	// Then
 	if err != nil {
 		t.Error("Get shouldn't return error")
 	}
@@ -52,6 +54,7 @@ func Test_given_existed_KV_when_read_nonexisted_key_then_return_error_and_empty_
 	// When
 	val, err := Get(wrongKey)
 
+	// Then
 	if err == nil {
 		t.Error("Get should return error")
 	}
@@ -73,6 +76,8 @@ func Test_given_existed_KV_when_delete_key_and_read_deleted_key_then_return_erro
 
 	// When
 	delete_err := Delete(testKey)
+
+	// Then
 	if delete_err != nil {
 		t.Error("Delete shouldn't return error")
 	}
