@@ -10,6 +10,7 @@ func Put(key string, value string) error {
 	return nil
 }
 
+// Error showing that there is no such key in the store
 var ErrorNoSuchKey = errors.New("No such key")
 
 // Get the value from the store

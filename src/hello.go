@@ -14,7 +14,7 @@ func main() {
 	// log.Fatal(http.ListenAndServe(":80", nil))
 
 	Put("test", "TEST VALUE")
-	val, error := Get("test1")
+	val, error := Get("test")
 	if error != nil {
 		fmt.Println(error)
 		return
