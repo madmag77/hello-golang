@@ -79,12 +79,4 @@ func main() {
 	r.HandleFunc("/v1/key/{key}", DeleteHandler).Methods("DELETE")
 
 	log.Fatal(http.ListenAndServe(":8080", r))
-
-	// Put("test", "TEST VALUE")
-	// val, error := Get("test")
-	// if error != nil {
-	// 	fmt.Println(error)
-	// 	return
-	// }
-	// fmt.Println(val)
 }
