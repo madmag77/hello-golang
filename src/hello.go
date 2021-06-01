@@ -77,20 +77,41 @@ func DeleteHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	log.Println("start")
 	logger, err := CreateFileTransactionalLogger("transactional_log_file")
 	if err != nil {
 		log.Fatal("Can't create transactional logger")
 	}
 
-	contextVars.store, err = CreateKeyValueStore(logger)
+	log.Println("transactinal logger created")
+	store, err := CreateKeyValueStore(logger)
 	if err != nil {
 		log.Fatal("Can't create key value store")
 	}
+
+	log.Println("key value store created")
+	err = store.RestorePersistedState()
+	if err != nil {
+		log.Fatal("Can't restore persistent state")
+	}
+
+	log.Println("persistent state restores")
+	errorsChan := logger.Run()
+
+	log.Println("transactional logger run")
+	go func() {
+		for loggerError := range errorsChan {
+			log.Fatal(loggerError)
+		}
+	}()
+
+	contextVars.store = store
 
 	r := mux.NewRouter()
 	r.HandleFunc("/v1/key/{key}", PutHandler).Methods("PUT")
 	r.HandleFunc("/v1/key/{key}", GetHandler).Methods("GET")
 	r.HandleFunc("/v1/key/{key}", DeleteHandler).Methods("DELETE")
 
+	log.Println("ready to run webserver")
 	log.Fatal(http.ListenAndServe(":8080", r))
 }

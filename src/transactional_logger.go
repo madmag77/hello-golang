@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 )
@@ -23,6 +24,9 @@ type Event struct {
 type TransactionalLogger interface {
 	WriteDelete(key string)
 	WritePut(key, value string)
+
+	ReadAll() (<-chan Event, <-chan error)
+	Run() <-chan error
 }
 
 type FileTransactionalLogger struct {
@@ -33,11 +37,11 @@ type FileTransactionalLogger struct {
 }
 
 func (l *FileTransactionalLogger) WriteDelete(key string) {
-	l.events <- Event{EventType: EventDelete, Key: key}
+	l.events <- Event{EventType: EventDelete, Key: key, Value: "_"}
 }
 
 func (l *FileTransactionalLogger) WritePut(key, value string) {
-	l.events <- Event{EventType: EventDelete, Key: key, Value: value}
+	l.events <- Event{EventType: EventPut, Key: key, Value: value}
 }
 
 func (l *FileTransactionalLogger) Err() <-chan error {
@@ -53,7 +57,7 @@ func CreateFileTransactionalLogger(filename string) (TransactionalLogger, error)
 	return &FileTransactionalLogger{file: file}, nil
 }
 
-func (l *FileTransactionalLogger) Run() {
+func (l *FileTransactionalLogger) Run() <-chan error {
 	events := make(chan Event, 16)
 	l.events = events
 
@@ -75,14 +79,44 @@ func (l *FileTransactionalLogger) Run() {
 			}
 		}
 	}()
+
+	return l.errors
 }
 
-func (l *FileTransactionalLogger) ReadAll() (<-chan Event, error) {
+func (l *FileTransactionalLogger) ReadAll() (<-chan Event, <-chan error) {
+	scanner := bufio.NewScanner(l.file)
 	allEvents := make(chan Event)
+	errorChan := make(chan error, 1)
 
 	go func() {
+		var e Event
 
+		defer close(allEvents)
+		defer close(errorChan)
+
+		for scanner.Scan() {
+			line := scanner.Text()
+
+			if _, err := fmt.Sscanf(line, "%d\t%d\t%s\t%s\n", &e.Id, &e.EventType, &e.Key, &e.Value); err != nil {
+				errorChan <- fmt.Errorf("inout parse error: %w", err)
+				return
+			}
+
+			if l.lastId >= e.Id {
+				errorChan <- fmt.Errorf("ids are out of order")
+				return
+			}
+
+			l.lastId = e.Id
+
+			allEvents <- e
+		}
+
+		if err := scanner.Err(); err != nil {
+			errorChan <- fmt.Errorf("transactional log read failure: %w", err)
+			return
+		}
 	}()
 
-	return allEvents, nil
+	return allEvents, errorChan
 }
