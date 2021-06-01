@@ -9,6 +9,10 @@ import (
 	"github.com/gorilla/mux"
 )
 
+var contextVars struct {
+	store KeyValueStore
+}
+
 func PutHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	key := vars["key"]
@@ -21,7 +25,7 @@ func PutHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = Put(key, string(value))
+	err = contextVars.store.Put(key, string(value))
 
 	if err != nil {
 		http.Error(w,
@@ -37,7 +41,7 @@ func GetHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	key := vars["key"]
 
-	value, err := Get(key)
+	value, err := contextVars.store.Get(key)
 
 	if err != nil {
 		if errors.Is(err, ErrorNoSuchKey) {
@@ -59,7 +63,7 @@ func DeleteHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	key := vars["key"]
 
-	err := Delete(key)
+	err := contextVars.store.Delete(key)
 
 	if err != nil {
 		http.Error(w,
@@ -73,6 +77,16 @@ func DeleteHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	logger, err := CreateFileTransactionalLogger("transactional_log_file")
+	if err != nil {
+		log.Fatal("Can't create transactional logger")
+	}
+
+	contextVars.store, err = CreateKeyValueStore(logger)
+	if err != nil {
+		log.Fatal("Can't create key value store")
+	}
+
 	r := mux.NewRouter()
 	r.HandleFunc("/v1/key/{key}", PutHandler).Methods("PUT")
 	r.HandleFunc("/v1/key/{key}", GetHandler).Methods("GET")

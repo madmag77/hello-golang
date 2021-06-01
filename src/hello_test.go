@@ -11,6 +11,8 @@ func Test_given_Rest_when_Put_KV_then_can_read_value(t *testing.T) {
 	t.Run("put and get same value", func(t *testing.T) {
 		// Given
 		testValue := "testValue"
+		mockLogger := MockTransactionalLogger{}
+		contextVars.store, _ = CreateKeyValueStore(&mockLogger)
 
 		// When
 		request, _ := http.NewRequest(http.MethodPut, "/v1/key/123", strings.NewReader(testValue))
