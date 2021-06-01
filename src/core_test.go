@@ -131,3 +131,11 @@ func (l *MockTransactionalLogger) WriteDelete(key string) {
 func (l *MockTransactionalLogger) WritePut(key, value string) {
 	l.putWasCalled = true
 }
+
+func (l *MockTransactionalLogger) Run() <-chan error {
+	return nil
+}
+
+func (l *MockTransactionalLogger) ReadAll() (<-chan Event, <-chan error) {
+	return nil, nil
+}
