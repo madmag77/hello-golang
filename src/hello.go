@@ -78,21 +78,27 @@ func DeleteHandler(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	log.Println("start")
-	logger, err := CreateFileTransactionalLogger("transactional_log_file")
+	//logger, err := CreateFileTransactionalLogger("transactional_log_file")
+	logger, err := CreatePostgresTransactionalLogger(PostgresDbParams{
+		dbName:   "postgres",
+		host:     "localhost",
+		user:     "postgres",
+		password: "",
+	})
 	if err != nil {
-		log.Fatal("Can't create transactional logger")
+		log.Fatalf("Can't create transactional logger %w", err)
 	}
 
 	log.Println("transactinal logger created")
 	store, err := CreateKeyValueStore(logger)
 	if err != nil {
-		log.Fatal("Can't create key value store")
+		log.Fatalf("Can't create key value store %w", err)
 	}
 
 	log.Println("key value store created")
 	err = store.RestorePersistedState()
 	if err != nil {
-		log.Fatal("Can't restore persistent state")
+		log.Fatalf("Can't restore persistent state %w", err)
 	}
 
 	log.Println("persistent state restores")
