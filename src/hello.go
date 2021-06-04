@@ -78,13 +78,22 @@ func DeleteHandler(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	log.Println("start")
-	logger, err := CreateFileTransactionalLogger("/usr/local/transactional_log_file")
-	// logger, err := CreatePostgresTransactionalLogger(PostgresDbParams{
-	// 	dbName:   "postgres",
-	// 	host:     "localhost",
-	// 	user:     "postgres",
-	// 	password: "",
-	// })
+	use_file_logger := true
+
+	var logger TransactionalLogger
+	var err error
+
+	if use_file_logger {
+		logger, err = CreateFileTransactionalLogger("/usr/local/transactional_log_file")
+	} else {
+		logger, err = CreatePostgresTransactionalLogger(PostgresDbParams{
+			dbName:   "postgres",
+			host:     "localhost",
+			user:     "postgres",
+			password: "",
+		})
+	}
+
 	if err != nil {
 		log.Fatalf("Can't create transactional logger %w", err)
 	}
